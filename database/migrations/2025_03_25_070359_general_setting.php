@@ -16,8 +16,6 @@ return new class extends Migration
             $table->integer("interval");
             $table->char("email");
             $table->integer("automeasure");
-            $table->integer("sendklh");
-            $table->integer("sendwqms");
             $table->timestamps();
         });
     }
