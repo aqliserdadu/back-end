@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('tbl_parameter', function (Blueprint $table) {
             $table->id();
             $table->integer('idsensor');
+            $table->enum("tipe",array("GPIO","modbus"))->default("modbus");;
             $table->char('name');
             $table->char('post');
             $table->char('parsing');

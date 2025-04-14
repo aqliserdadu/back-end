@@ -122,7 +122,8 @@ class SensorController extends Controller
             glob("/dev/ttyACM*")  // Arduino dan perangkat lain
         );
 
-        $serial_ports = $ports;
+        //$serial_ports = $ports;
+        $serial_ports =array("/dev/ttyUSB1","/dev/ttyUSB9");
 
         if (!empty($serial_ports)) {
 
@@ -165,12 +166,31 @@ class SensorController extends Controller
         }
     }
 
+    public function ambilParameterEdit()
+    {
+
+        try {
+
+            $data = ListParameter::all();
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ], 200);
+        } catch (Exception $e) {
+            Log::error('Gagal mengambil data parameter: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data.'
+            ], 500);
+        }
+    }
 
     public function saveSensor(Request $request){
 
 
         $data = $request->all();
-        //$sensorSettings = $data['sensorSettings'];
         $sensorName = $data['sensorSettings']['sensorName'];
         $dataBits = $data['sensorSettings']['dataBits'];
         $port = $data['sensorSettings']['port'];
@@ -196,8 +216,11 @@ class SensorController extends Controller
             ], 400);
         }
 
+
+
         DB::beginTransaction();
         try{
+
 
             $header = Sensor::create([
 
@@ -208,7 +231,7 @@ class SensorController extends Controller
                     "functioncode" => $functionCode,
                     "databits" => $dataBits,
                     "stopbits" => $stopBits,
-                    "partiy" => $parity,
+                    "parity" => $parity,
                     "length" => $length,
                     "address" => $address,
                     "crc" => $crc,
@@ -272,14 +295,116 @@ class SensorController extends Controller
 
     }
 
+    public function updateSensor(Request $request, $id)
+    {
+        $data = $request->all();
+        $sensorSettings = $data['params']['sensorSettings'];
+        $parameters = $data['params']['parameters'];
+
+        $sensor = Sensor::findOrFail($id);
+
+        // Cek apakah port sudah dipakai sensor lain
+        $existingSensor = Sensor::where('port', $sensorSettings['port'])
+            ->where('id', '!=', $id)
+            ->first();
+
+        if ($existingSensor) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Port sudah terpakai oleh sensor lain!',
+            ], 400);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Update sensor utama
+            $sensor->update([
+                "sensorname" => $sensorSettings['sensorName'],
+                "port" => $sensorSettings['port'],
+                "baudrate" => $sensorSettings['baudRate'],
+                "slaveid" => $sensorSettings['slaveID'],
+                "functioncode" => $sensorSettings['functionCode'],
+                "databits" => $sensorSettings['dataBits'],
+                "stopbits" => $sensorSettings['stopBits'],
+                "parity" => $sensorSettings['parity'],
+                "length" => $sensorSettings['length'],
+                "address" => $sensorSettings['address'],
+                "crc" => $sensorSettings['crc'],
+                "metode" => $sensorSettings['metode'],
+            ]);
+
+            // Hapus parameter lama
+            Parameter::where('idsensor', $id)->delete();
+
+            // Masukkan parameter baru
+            $parametersData = array_map(function ($parameter) use ($id) {
+                return Parameter::create([
+                    'idsensor' => $id,
+                    'name' => $parameter['parameterName'],
+                    'parsing' => $parameter['dataParsing'],
+                    'post' => $parameter['postProcessing'],
+                    'unit' => $parameter['unit'],
+                ]);
+            }, $parameters);
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Sensor dan parameter berhasil diupdate!',
+                'sensor_id' => $id,
+                'parameters' => $parametersData,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Terjadi kesalahan saat update sensor.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function deleteSensor($id){
+
+        DB::beginTransaction();
+
+        try {
+            $sensor = Sensor::findOrFail($id);
+
+            // Hapus semua parameter yang terkait
+            Parameter::where('idsensor', $id)->delete();
+
+            // Hapus sensor
+            $sensor->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' =>true,
+                'message' => 'Sensor dan parameter berhasil dihapus!',
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Gagal menghapus sensor.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function ambilSensor(){
 
        try{
 
             $result = DB::table('tbl_sensor')
             ->join('tbl_parameter', 'tbl_sensor.id', '=', 'tbl_parameter.idsensor')
-            ->select('tbl_sensor.id','tbl_sensor.sensorname', DB::raw('GROUP_CONCAT(tbl_parameter.name SEPARATOR ",") as parameters'))
-            ->groupBy('tbl_sensor.id')
+            ->select(
+                'tbl_sensor.id',
+                'tbl_parameter.tipe',
+                'tbl_sensor.sensorname',
+                DB::raw('GROUP_CONCAT(tbl_parameter.name SEPARATOR ",") as parameters')
+            )
+            ->groupBy('tbl_sensor.id', 'tbl_parameter.tipe', 'tbl_sensor.sensorname')
             ->get();
 
             return response()->json([
@@ -294,6 +419,104 @@ class SensorController extends Controller
                 'messages' => $err->getMessage(),
             ],500);
        }
+    }
+
+
+    public function saveRainSensor(Request $request){
+
+
+        $data = $request->all();
+        $name = $data['name'];
+        $tipping = $data['tipping'];
+
+        // Cek apakah port sudah ada di database
+        $existingParameter = Parameter::where('name', "Rainfall")->first();
+
+        if($existingParameter && $existingParameter->tipe == "modbus"){
+
+            return response()->json([
+                'status' => false,
+                'message' => "Parameter Raninfall Telah Di Dengan Modbus!",
+            ], 400);
+        }
+
+        if($existingParameter&& $existingParameter->tipe == "GPIO"){
+            //hapus jika ada data
+            Sensor::destroy($existingParameter->idsensor);
+            Parameter::destroy($existingParameter->id);
+        }
+
+
+        DB::beginTransaction();
+        try{
+
+
+            $header = Sensor::create([
+
+                    "sensorname" => $name,
+                    "port" => "GPIO",
+                    "baudrate" => "",
+                    "slaveid" => "",
+                    "functioncode" => "",
+                    "databits" => "",
+                    "stopbits" => "",
+                    "parity" => "",
+                    "length" => "",
+                    "address" => "",
+                    "crc" => "",
+                    "metode" => "",
+
+            ]);
+
+           $parameter = Parameter::create([
+                    'idsensor' => $header->id,
+                    'tipe' => 'GPIO',
+                    'name' => 'Rainfall',
+                    'parsing' => '',
+                    'post' => '',
+                    'unit' => '',
+                ]);
+            // Commit transaksi jika berhasil
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Post and details created successfully!',
+                'header_id' => $header->id,
+                'parametersData' => 'Rainfall',
+            ]);
+
+
+        }catch(\Exception $e){
+            DB::rollBack();
+
+            // Mengembalikan response error
+            return response()->json([
+                'message' => 'An error occurred while creating post or details.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+
+        //return response()->json($data,200);
+
+    }
+
+    public function ambilRainSensor(){
+
+        try{
+
+             $result = Sensor::where('port','GPIO')->get();
+             return response()->json([
+                 'status' => true,
+                 'data' => $result,
+             ],200);
+
+        }catch(\Exception $err){
+
+             return response()->json([
+                 'status' => false,
+                 'messages' => $err->getMessage(),
+             ],500);
+        }
     }
 
     /**
@@ -333,18 +556,29 @@ class SensorController extends Controller
     public function cekDevice()
     {
 
-        $command = "nmcli device status";
+        try {
+            $command = "nmcli device status";
 
-        // Menjalankan perintah dan mendapatkan output
-        $output = shell_exec($command);
+            // Menjalankan perintah dan mendapatkan output
+            $output = shell_exec($command);
 
-        // Mengecek apakah ada perangkat yang terhubung dan tipe koneksinya
-        if (strpos($output, 'wifi') !== false && strpos($output, 'connected') !== false) {
-            return response()->json(["status" => true, "device" => "wifi"], 200);
-        } else if (strpos($output, 'ethernet') !== false && strpos($output, 'connected') !== false) {
-            return response()->json(["status" => true, "device" => "lan"], 200);
-        } else {
-            return response()->json(["status" => false, "message" => "Tidak ada jaringan yang terhubung"], 500);
+            if ($output === null) {
+                throw new \Exception("Gagal menjalankan perintah shell.");
+            }
+
+            // Mengecek apakah ada perangkat yang terhubung dan tipe koneksinya
+            if (strpos($output, 'wifi') !== false && strpos($output, 'connected') !== false) {
+                return response()->json(["status" => true, "device" => "wifi"], 200);
+            } else if (strpos($output, 'ethernet') !== false && strpos($output, 'connected') !== false) {
+                return response()->json(["status" => true, "device" => "lan"], 200);
+            } else {
+                return response()->json(["status" => false, "message" => "Tidak ada jaringan yang terhubung"], 500);
+            }
+        } catch (\Throwable $e) {
+            return response()->json([
+                "status" => false,
+                "message" => "Terjadi kesalahan: " . $e->getMessage()
+            ], 500);
         }
     }
 

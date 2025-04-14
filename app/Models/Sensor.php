@@ -11,6 +11,7 @@ class Sensor extends Model
     use HasFactory;
     protected $table ="tbl_sensor";
     protected $guarded = [];
+
 }
 
 

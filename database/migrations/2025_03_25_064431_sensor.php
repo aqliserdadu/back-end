@@ -20,7 +20,7 @@ return new class extends Migration
             $table->char("functioncode");
             $table->char("databits");
             $table->char("stopbits");
-            $table->char("partiy");
+            $table->char("parity");
             $table->char("length");
             $table->char("address");
             $table->char("crc");
