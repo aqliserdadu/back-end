@@ -18,14 +18,21 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::post("/login",[SensorController::class,"loginService"]);
+Route::get("/deviceSetting",[SensorController::class,"deviceSetting"]);
+Route::get("/apiSetting",[SensorController::class,"apiSetting"]);
+Route::get("/emailSetting",[SensorController::class,"emailSetting"]);
 Route::get("/saveSetting",[SensorController::class,"saveSetting"]);
 Route::get("/setting",[SensorController::class,"ambilSetting"]);
 Route::get("/ambilPort",[SensorController::class,"ambilPort"]);
 Route::get("/ambilParameter",[SensorController::class,"ambilParameter"]);
-Route::get("/saveSensor",[SensorController::class,"saveSensor"]);
-Route::get("/editSensor",[SensorController::class,"editSensor"]);
 Route::get("/ambilSensor",[SensorController::class,"ambilSensor"]);
-
+Route::get("/saveSensor",[SensorController::class,"saveSensor"]);
+Route::get("/ambilParameterEdit",[SensorController::class,"ambilParameterEdit"]);
+Route::get("/editSensor",[SensorController::class,"editSensor"]);
+Route::put("/updateSensor/{id}",[SensorController::class,"updateSensor"]);
+Route::delete("/deleteSensor/{id}",[SensorController::class,"deleteSensor"]);
+Route::get("/saveRainSensor",[SensorController::class,"saveRainSensor"]);
+Route::get("/ambilRainSensor",[SensorController::class,"ambilRainSensor"]);
 
 //konfigurasi jaringan
 Route::get("/cekDevice",[SensorController::class,"cekDevice"]);

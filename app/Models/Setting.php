@@ -10,7 +10,7 @@ class Setting extends Model
 {
     use HasFactory;
     protected $table ="tbl_setting";
-    protected $fillable = ["interval","email","automeasure"];
+    protected $guarded = [];
 }
 
 

@@ -54,6 +54,116 @@ class SensorController extends Controller
         }
     }
 
+    public function deviceSetting(Request $request)
+    {
+
+
+        try {
+
+
+            $setting = Setting::first();
+
+            $data = $request->only(['deviceid', 'stationname', 'latitude', 'longitude']);
+
+            if (!$setting) {
+                Setting::create($data);
+                $message = "created";
+            } else {
+                $setting->update($data);
+                $message = "updated";
+            }
+
+            return response()->json([
+                "status" => true,
+                "message" => $message
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                "status" => false,
+                "message" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function apiSetting(Request $request)
+    {
+
+        try {
+
+
+            $cek = Setting::first();
+            if (!$cek) {
+                //jika tidak ada data
+                Setting::create([
+                    "klhapi" => $request->get('klhapi'),
+                    "klhtoken" => $request->get('klhtoken'),
+                    "klhstatus" => $request->get('klhstatus'),
+                    "wqmsapi" => $request->get('wqmsapi'),
+                    "wqmstoken" => $request->get('wqmstoken'),
+                    "wqmsstatus" => $request->get('wqmsstatus'),
+                ]);
+            } else {
+
+                //jika ada data
+                Setting::where('id', $cek->id)->update([
+
+                    "klhapi" => $request->get('klhapi'),
+                    "klhtoken" => $request->get('klhtoken'),
+                    "klhstatus" => $request->get('klhstatus'),
+                    "wqmsapi" => $request->get('wqmsapi'),
+                    "wqmstoken" => $request->get('wqmstoken'),
+                    "wqmsstatus" => $request->get('wqmsstatus'),
+
+                ]);
+            }
+
+
+
+            return response()->json(["status" => true, 'message' => 'Data Berhasil Di Simpan!'], 200);
+        } catch (Exception $e) {
+
+            return response()->json(["status" => false, "message" => $e->getMessage()], 500);
+        }
+    }
+
+    public function emailSetting(Request $request)
+    {
+
+        try {
+
+
+            $cek = Setting::first();
+            if (!$cek) {
+                //jika tidak ada data
+                Setting::create([
+                    "stmpserver" => $request->get('stmpserver'),
+                    "stmpport" => $request->get('stmpport'),
+                    "stmpusername" => $request->get('stmpusername'),
+                    "stmppassword" => $request->get('stmppassword'),
+                ]);
+            } else {
+
+                //jika ada data
+                Setting::where('id', $cek->id)->update([
+
+                    "stmpserver" => $request->get('stmpserver'),
+                    "stmpport" => $request->get('stmpport'),
+                    "stmpusername" => $request->get('stmpusername'),
+                    "stmppassword" => $request->get('stmppassword'),
+
+                ]);
+            }
+
+
+
+            return response()->json(["status" => true, 'message' => 'Data Berhasil Di Simpan!'], 200);
+        } catch (Exception $e) {
+
+            return response()->json(["status" => false, "message" => $e->getMessage()], 500);
+        }
+    }
+
     public function saveSetting(Request $request)
     {
 
@@ -69,7 +179,7 @@ class SensorController extends Controller
             }
 
 
-            $cek = Setting::find(1);
+            $cek = Setting::first();
             if (!$cek) {
                 //jika tidak ada data
                 Setting::create([
@@ -102,7 +212,7 @@ class SensorController extends Controller
     {
 
         try {
-            $data = Setting::find(1);
+            $data = Setting::first();
             return response()->json($data, 200);
         } catch (Exception $e) {
             return response()->json(["massage" => $e->getMessage()], 500);
