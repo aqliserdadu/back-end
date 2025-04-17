@@ -184,7 +184,7 @@ class SensorController extends Controller
 
             $output = exec('python3 /var/www/html/project/spas-main/manualReading.py', $output, $return_code);
             if ($return_code === 0) {
-                //ambil data dari database
+                //ambil data dari database a
                 $data = DB::table("tbl_sensor_data")->where("tipe", "manual")->orderBy('dateall', 'desc')->first();
                 $ph = $data->pH;
                 $tss = $data->tss;
