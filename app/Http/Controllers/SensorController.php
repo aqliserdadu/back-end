@@ -31,6 +31,85 @@ class SensorController extends Controller
         //
     }
 
+    public function ambilValues(){
+
+        try {
+
+                //ambil data dari database a
+                $data = DB::table("tbl_sensor_data")->where("tipe", "manual")->orderBy('dateall', 'desc')->first();
+                $ph = $data->pH;
+                $tss = $data->tss;
+                $nh3n = $data->nh3n;
+                $cod = $data->cod;
+                $depth = $data->depth;
+                $debit = $data->debit;
+                $rainfall = $data->rainfall;
+                $temperature = $data->temperature;
+                $waterpressure = $data->waterpressure;
+                $dateall = $data->dateall;
+                $tampung = [];
+
+                $ambilParameter = Parameter::all();
+
+
+                foreach ($ambilParameter as $a) {
+                    $parameter = $a['name'];
+                    $unit = $a['unit'];
+
+                    switch ($parameter) {
+                        case "pH":
+                            $value = $ph;
+                            break;
+                        case "TSS":
+                            $value = $tss;
+                            break;
+                        case "Debit":
+                            $value = $debit;
+                            break;
+                        case "COD":
+                            $value = $cod;
+                            break;
+                        case "NH3-N":
+                            $value = $nh3n;
+                            break;
+                        case "Rainfall":
+                            $value = $rainfall;
+                            break;
+                        case "Depth":
+                            $value = $depth;
+                            break;
+                        case "Temperature":
+                            $value = $temperature;
+                            break;
+                        case "Water Pressure":
+                            $value = $waterpressure;
+                            break;
+                        default:
+                            $value = 0;
+                            break;
+                    }
+
+                    $tampung[] = [
+                        'id' => $a['id'],
+                        'name' => $parameter,
+                        'value' => $value,
+                        'unit' => $unit,
+                        'dateall' => $dateall
+                    ];
+                }
+
+            return response()->json(['message' => true, 'data' => $tampung], 200);
+
+        } catch (\Exception $e) {
+
+            return response()->json(['message' => $e->getMessage()], 200);
+        }
+
+    }
+
+
+
+
     #Fungsi di Menu Service
     public function loginService(Request $request)
     {
@@ -180,6 +259,12 @@ class SensorController extends Controller
 
         $dataGet = $request->all();
 
+        $cekAutoMeasure = Setting::first();
+        $cek = (int) $cekAutoMeasure->automeasure;
+        if($cek == 1 ){
+            return response()->json(["status"=>false,"massage"=>"Harap matikan fungsi automeasure, sebelum manual reading!"],500);
+        }
+
         try {
 
             $output = exec('python3 /var/www/html/project/spas-main/manualReading.py', $output, $return_code);
@@ -236,6 +321,7 @@ class SensorController extends Controller
                     $final = (float)$value + $offset;
 
                     $tampung[] = [
+                        'id' => $a['id'],
                         'name' => $parameter,
                         'value' => $value,
                         'offset' => $offset,
@@ -253,7 +339,24 @@ class SensorController extends Controller
         }
     }
 
+    public function saveKalibrasiSensor(Request $request){
 
+        try {
+
+
+            $data = $request->all();
+            if ($data){
+                foreach($data as $in){
+                    KalibrasiSensor::where("name",$in['name'])->update(['offset' => $in['offset']]);
+                }
+            }
+
+            return response()->json(["status" => true, 'message' => 'Data Berhasil Di Simpan!'], 200);
+        } catch (Exception $e) {
+
+            return response()->json(["status" => false, "message" => $e->getMessage()], 500);
+        }
+    }
 
     #End Service
 
@@ -268,6 +371,7 @@ class SensorController extends Controller
             return response()->json(["massage" => $e->getMessage()], 500);
         }
     }
+
     public function saveSetting(Request $request)
     {
 
