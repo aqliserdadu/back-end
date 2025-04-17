@@ -21,6 +21,8 @@ Route::post("/login",[SensorController::class,"loginService"]);
 Route::get("/deviceSetting",[SensorController::class,"deviceSetting"]);
 Route::get("/apiSetting",[SensorController::class,"apiSetting"]);
 Route::get("/emailSetting",[SensorController::class,"emailSetting"]);
+Route::get("/ambilParameterList",[SensorController::class,"ambilParameterList"]);
+
 Route::get("/saveSetting",[SensorController::class,"saveSetting"]);
 Route::get("/setting",[SensorController::class,"ambilSetting"]);
 Route::get("/ambilPort",[SensorController::class,"ambilPort"]);
@@ -33,6 +35,7 @@ Route::put("/updateSensor/{id}",[SensorController::class,"updateSensor"]);
 Route::delete("/deleteSensor/{id}",[SensorController::class,"deleteSensor"]);
 Route::get("/saveRainSensor",[SensorController::class,"saveRainSensor"]);
 Route::get("/ambilRainSensor",[SensorController::class,"ambilRainSensor"]);
+Route::get("/manualReadingSensor",[SensorController::class,"manualReadingSensor"]);
 
 //konfigurasi jaringan
 Route::get("/cekDevice",[SensorController::class,"cekDevice"]);

@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('tbl_kalibrasi', function (Blueprint $table) {
             $table->id();
-            $table->integer("idparameter");
-            $table->float("offset");
+            $table->integer("idsensor");
+            $table->char("name");
+            $table->float("offset")->default(0);
             $table->timestamps();
         });
     }

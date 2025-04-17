@@ -17,6 +17,7 @@ return new class extends Migration
             $table->date("date");
             $table->dateTime("dateall");
             $table->bigInteger("datetime");
+            $table->enum("tipe",array("otomatis","manual"))->default("otomatis");
             $table->float("pH")->nullable();
             $table->float("tss")->nullable();
             $table->float("nh3n")->nullable();

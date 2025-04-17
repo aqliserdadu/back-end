@@ -16,9 +16,10 @@ return new class extends Migration
             $table->integer('idsensor');
             $table->enum("tipe",array("GPIO","modbus"))->default("modbus");;
             $table->char('name');
-            $table->char('post');
+            $table->char('post')->nullable();
             $table->char('parsing');
             $table->char('unit');
+            $table->float("resolution")->default(0);
             $table->timestamps();
         });
     }

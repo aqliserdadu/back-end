@@ -13,24 +13,24 @@ return new class extends Migration
     {
         Schema::create('tbl_setting', function (Blueprint $table) {
             $table->id();
-            $table->integer("interval")->nullable();
+            $table->integer("interval")->default(0);
             $table->char("email")->nullable();
-            $table->integer("automeasure")->nullable();
+            $table->enum("automeasure",array(0,1))->default(0);
 
             $table->char("deviceid")->nullable();
             $table->char("stationname")->nullable();
-            $table->decimal('latitude', 10, 7)->nullable();
-            $table->decimal('longitude', 10, 7)->nullable();
+            $table->decimal('latitude', 10, 7)->default(0);
+            $table->decimal('longitude', 10, 7)->default(0);
 
             $table->char("klhapi")->nullable();
             $table->char("klhtoken")->nullable();
-            $table->integer("klhstatus")->nullable();
+            $table->integer("klhstatus")->default(0);
             $table->char("wqmsapi")->nullable();
             $table->char("wqmstoken")->nullable();
-            $table->integer("wqmsstatus")->nullable();
+            $table->integer("wqmsstatus")->default(0);
 
             $table->char("stmpserver")->nullable();
-            $table->integer("stmpport")->nullable();
+            $table->integer("stmpport")->default(22);
             $table->char("stmpusername")->nullable();
             $table->char("stmppassword")->nullable();
 
